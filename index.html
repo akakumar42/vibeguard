@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeGuard — Evidence-backed security assessments for APKs &amp; web apps</title>
+<meta name="description" content="VibeGuard runs a fast static pass and an autonomous RE-RT agent deep-dive over your Android APK or web app, then returns an evidence-backed assessment: severity-sorted findings, positive controls, honest caveats.">
+<link rel="icon" href="static/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0d10; --card:#12151a; --line:#1f232b;
+  --ink:#f0fdf4; --mut:#7d8a94; --info:#94a3b8;
+  --lime:#a3e635; --lime-dim:rgba(163,230,53,.13); --lime-soft:rgba(163,230,53,.06);
+  --red:#f87171; --sky:#7dd3fc;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.mono{font-family:'JetBrains Mono',monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+header{position:sticky;top:0;z-index:50;background:rgba(11,13,16,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.06em;font-size:15px}
+.brand img{width:30px;height:30px;border-radius:8px}
+.brand .vb{color:var(--lime)}
+.nav-links{display:flex;gap:28px;font-size:14px;color:var(--mut)}
+.nav-links a:hover{color:var(--lime)}
+.btn{display:inline-block;padding:13px 26px;border-radius:10px;font-weight:600;font-size:14px;border:1px solid var(--lime);transition:.18s}
+.btn-solid{background:var(--lime);color:#0b0d10}
+.btn-solid:hover{box-shadow:0 0 24px rgba(163,230,53,.35);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--lime)}
+.btn-ghost:hover{background:var(--lime-dim)}
+.btn-big{padding:16px 32px;font-size:15px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.28em;color:var(--lime);text-transform:uppercase;margin-bottom:18px}
+.eyebrow::before{content:"// "}
+.hero{padding:110px 0 90px;position:relative;text-align:center}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 340px at 50% 0%,rgba(163,230,53,.14),transparent 70%);pointer-events:none}
+.hero h1{font-size:clamp(38px,6vw,68px);line-height:1.06;letter-spacing:-.02em;font-weight:700}
+.hero h1 .hl{color:var(--lime)}
+.hero p{max-width:640px;margin:24px auto 0;color:var(--info);font-size:17px}
+.hero .mono.tag{display:inline-block;margin-top:34px;color:var(--mut);font-size:12px;border:1px solid var(--line);border-radius:99px;padding:7px 16px}
+.hero-cta{display:flex;gap:14px;justify-content:center;margin-top:38px;flex-wrap:wrap}
+section{padding:84px 0}
+.sec-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.28em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
+.sec-title{font-size:clamp(26px,4vw,40px);font-weight:700;letter-spacing:-.01em}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:48px}
+.tl{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 22px;position:relative;transition:.2s}
+.tl:hover{border-color:rgba(163,230,53,.45);transform:translateY(-3px)}
+.tl .num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--lime);letter-spacing:.15em}
+.tl h3{margin:14px 0 10px;font-size:17px}
+.tl p{font-size:13.5px;color:var(--mut)}
+.why{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:48px}
+.why .w{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px 26px}
+.why .num{font-family:'JetBrains Mono',monospace;font-size:26px;color:var(--lime)}
+.why h3{margin:16px 0 10px;font-size:19px}
+.why p{font-size:14px;color:var(--mut)}
+.form-outer{display:grid;grid-template-columns:1fr 1.15fr;gap:56px;margin-top:48px;align-items:start}
+.form-copy p{color:var(--info);margin-top:14px;font-size:15px}
+.form-copy ul{list-style:none;margin-top:26px}
+.form-copy li{padding:9px 0 9px 26px;position:relative;color:var(--mut);font-size:14px}
+.form-copy li::before{content:">";position:absolute;left:0;color:var(--lime);font-family:'JetBrains Mono',monospace}
+form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.f-grid .full{grid-column:1/-1}
+label{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase;margin-bottom:7px}
+input,select,textarea{width:100%;background:#0d1014;border:1px solid var(--line);border-radius:9px;padding:12px 14px;color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:14px;outline:none;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--lime);box-shadow:0 0 0 3px rgba(163,230,53,.12)}
+textarea{resize:vertical;min-height:88px}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+.consent{display:flex;gap:10px;align-items:flex-start;margin:16px 0 20px}
+.consent input{width:auto;margin-top:3px}
+.consent label{margin:0;font-size:12px;text-transform:none;letter-spacing:0;color:var(--mut);line-height:1.5}
+form .btn{width:100%;cursor:pointer;font-family:'Space Grotesk',sans-serif}
+.form-msg{margin-top:14px;font-size:13px;padding:11px 14px;border-radius:9px;display:none}
+.form-msg.ok{display:block;background:var(--lime-dim);border:1px solid var(--lime);color:var(--lime)}
+.form-msg.err{display:block;background:rgba(248,113,113,.12);border:1px solid var(--red);color:var(--red)}
+.hp{position:absolute;left:-5000px;opacity:0}
+.faq{max-width:760px;margin:48px auto 0}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+details[open]{border-color:rgba(163,230,53,.4)}
+summary{cursor:pointer;padding:18px 22px;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:'JetBrains Mono',monospace;color:var(--lime);font-size:18px}
+details[open] summary::after{content:"−"}
+details .a{padding:0 22px 20px;color:var(--mut);font-size:14px}
+footer{border-top:1px solid var(--line);padding:56px 0;margin-top:60px}
+.foot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;font-size:13px;color:var(--mut)}
+.foot h4{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--info);text-transform:uppercase;margin-bottom:14px}
+.foot a:hover{color:var(--lime)}
+.copyright{margin-top:44px;padding-top:22px;border-top:1px solid var(--line);color:var(--mut);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media(max-width:900px){.timeline{grid-template-columns:1fr 1fr}.why{grid-template-columns:1fr}.form-outer{grid-template-columns:1fr}.foot{grid-template-columns:1fr;gap:26px}}
+@media(max-width:560px){.timeline{grid-template-columns:1fr}.f-grid{grid-template-columns:1fr}.nav-links{display:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="/"><img src="static/logo.png" alt="VibeGuard logo"><span>VIBE<span class="vb">GUARD</span></span></a>
+    <nav class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#why">Capabilities</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-solid" href="#join">Join the waitlist</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Static reverse engineering × authorized red-team</div>
+    <h1>Ship your app with <span class="hl">proof</span>,<br>not promises.</h1>
+    <p>VibeGuard runs a fast static pass, then an autonomous RE-RT agent deep-dive over your Android APK or web app — and hands you an evidence-backed assessment: severity-sorted findings, positive controls, honest caveats.</p>
+    <span class="mono tag">APK static RE &nbsp;·&nbsp; Web red-team &nbsp;·&nbsp; Agent deep-dive &nbsp;·&nbsp; Evidence-backed reports</span>
+    <div class="hero-cta">
+      <a class="btn btn-solid btn-big" href="#join">Join the beta waitlist</a>
+      <a class="btn btn-ghost btn-big" href="#how">How it works</a>
+    </div>
+  </div>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-label">// Pipeline</div>
+    <h2 class="sec-title">Four stages through the console.</h2>
+    <div class="timeline">
+      <div class="tl"><div class="num">STAGE 01</div><h3>Drop the target</h3><p>Upload an APK / XAPK, or point the console at a web target you own and authorize.</p></div>
+      <div class="tl"><div class="num">STAGE 02</div><h3>Fast pass</h3><p>A pure-Python static sweep in seconds — manifest, permissions, config, endpoints, quick verdict.</p></div>
+      <div class="tl"><div class="num">STAGE 03</div><h3>Agent deep-dive</h3><p>The RE-RT agent runs the full rea + redteam pipeline. Rate-limited, authorization-gated, no destructive tests.</p></div>
+      <div class="tl"><div class="num">STAGE 04</div><h3>Evidence-backed report</h3><p>Findings severity-sorted with command + output, verified positive controls, an honest-caveats section, and an interactive 3D report.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="why" style="background:var(--lime-soft)">
+  <div class="wrap">
+    <div class="sec-label">// Why VibeGuard</div>
+    <h2 class="sec-title">The work is the signal.</h2>
+    <div class="why">
+      <div class="w"><div class="num">01</div><h3>Evidence, not vibes</h3><p>Every finding ships with the exact command and its output excerpt. No claims without artifacts — raw tool logs land on disk next to the report.</p></div>
+      <div class="w"><div class="num">02</div><h3>Controls, not just holes</h3><p>Verified-good behaviors are first-class results: rate limiting engaged, TLS posture, cookie flags, zero secrets found. You learn what works, not only what breaks.</p></div>
+      <div class="w"><div class="num">03</div><h3>Two surfaces, one console</h3><p>Static APK reverse engineering — manifest, exported components, WebView bridges, secrets — and authorized web red-team recon, headers, and scanning in a single pipeline.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="join">
+  <div class="wrap">
+    <div class="sec-label">// Waitlist</div>
+    <h2 class="sec-title">Join the beta waitlist.</h2>
+    <div class="form-outer">
+      <div class="form-copy">
+        <p>Tell us what you want assessed. We'll onboard beta testers in waves and your request lands directly in our inbox.</p>
+        <ul>
+          <li>APK static reverse engineering — no source code needed</li>
+          <li>Authorized web red-team assessments</li>
+          <li>Agent-written deep-dive reports with raw evidence</li>
+          <li>Your scope respected — nothing runs without authorization</li>
+        </ul>
+      </div>
+      <form id="waitlist-form" action="https://formsubmit.co/akashkumarapp123@gmail.com" method="POST">
+        <input type="hidden" name="_subject" value="VibeGuard landing — new waitlist request">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_next" value="https://akakumar42.github.io/vibeguard/?sent=1">
+        <input type="text" name="_honey" class="hp" tabindex="-1" autocomplete="off">
+        <div class="f-grid">
+          <div><label for="fname">First name</label><input id="fname" name="First name" type="text" required></div>
+          <div><label for="lname">Last name</label><input id="lname" name="Last name" type="text" required></div>
+          <div class="full"><label for="email">Email address</label><input id="email" name="Email address" type="email" placeholder="you@company.com" required></div>
+          <div class="full"><label for="company">Company / project (optional)</label><input id="company" name="Company" type="text"></div>
+          <div class="full"><label for="interest">Assessment interest</label>
+            <select id="interest" name="Assessment interest" required>
+              <option value="" disabled selected>Select an option</option>
+              <option>APK static reverse engineering</option>
+              <option>Web red-team assessment</option>
+              <option>Both</option>
+              <option>Just a demo</option>
+            </select>
+          </div>
+          <div class="full"><label for="target">What do you want assessed? (optional)</label><textarea id="target" name="Target / notes" placeholder="Android app, web app, both, still deciding…"></textarea></div>
+        </div>
+        <div class="consent">
+          <input id="consent" type="checkbox" required>
+          <label for="consent">I agree that my request is emailed to the VibeGuard team and confirm I own or am authorized to test anything I ask to be assessed.</label>
+        </div>
+        <button class="btn btn-solid btn-big" type="submit" id="submit-btn">Join the beta waitlist</button>
+        <div class="form-msg" id="form-msg"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-label">// Questions</div>
+    <h2 class="sec-title" style="text-align:center">Before you sign up.</h2>
+    <div class="faq">
+      <details><summary>Who is VibeGuard for?</summary><div class="a">Founders, engineering leads and security teams who own an Android app, a web app, or both — and want a real security posture check on shipped artifacts before attackers do it for them.</div></details>
+      <details><summary>Do you need our source code?</summary><div class="a">No. The static pass and the agent deep-dive work on shipped artifacts: the APK you distribute and the live web target. Static analysis never executes the target at all.</div></details>
+      <details><summary>What's in the report?</summary><div class="a">Findings severity-sorted high → low, each with description, the exact command and its output as evidence, and concrete remediation. Then verified positive controls, then an honest list of what was NOT tested and why. Machine-readable findings.json and an interactive HTML report included.</div></details>
+      <details><summary>Is anything run against my target without asking?</summary><div class="a">No. Active scanning is authorization-gated: the deep-dive agent refuses targets unless you attest authorization in the console. Rates are self-limited, no destructive tests, no credential stuffing, no DoS.</div></details>
+      <details><summary>What's the difference between the fast pass and the deep dive?</summary><div class="a">The fast pass is a seconds-long pure-Python static sweep for an immediate verdict. The deep dive hands the job to the RE-RT agent, which runs the full pipeline — recon, header audits, content discovery, static RE — and writes the complete assessment to disk.</div></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="brand" href="/"><img src="static/logo.png" alt="VibeGuard logo"><span>VIBE<span class="vb">GUARD</span></span></a>
+        <p style="margin-top:14px;max-width:260px">Evidence-backed security assessments for Android apps and web targets.</p>
+      </div>
+      <div>
+        <h4>Waitlist</h4>
+        <a href="#join">Join the beta waitlist</a><br>
+        <a href="#how">How it works</a>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <a href="mailto:akashkumarapp123@gmail.com">akashkumarapp123@gmail.com</a><br>
+        <a href="https://github.com/akakumar42/vibeguard" rel="noopener">GitHub</a>
+      </div>
+    </div>
+    <div class="copyright">
+      <span class="mono">© 2026 VibeGuard — the work is the signal.</span>
+      <span class="mono">static RE · red-team · agent deep-dive</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var form=document.getElementById('waitlist-form'),msg=document.getElementById('form-msg'),btn=document.getElementById('submit-btn');
+  function show(cls,text){msg.className='form-msg '+cls;msg.textContent=text}
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    btn.disabled=true;btn.textContent='Sending…';msg.className='form-msg';
+    fetch('https://formsubmit.co/ajax/akashkumarapp123@gmail.com',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        _subject:'VibeGuard landing — new waitlist request',
+        _template:'table',
+        _captcha:'false',
+        'First name':form['First name'].value,
+        'Last name':form['Last name'].value,
+        'Email address':form['Email address'].value,
+        'Company':form['Company'].value,
+        'Assessment interest':form['Assessment interest'].value,
+        'Target / notes':form['Target / notes'].value,
+        'Consent':form.consent.checked?'yes':'no'
+      })
+    }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})
+      .then(function(res){
+        if(res.ok){show('ok','Request sent — check your inbox for our reply.');form.reset()}
+        else{show('err',(res.j&&res.j.message)?res.j.message:'Something went wrong — email us directly.')}
+      })
+      .catch(function(){show('err','Network error — email us directly.')})
+      .then(function(){btn.disabled=false;btn.textContent='Join the beta waitlist'});
+  });
+})();
+</script>
+</body>
+</html>
